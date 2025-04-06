@@ -1,0 +1,2 @@
+FROM granite3.1-dense:8b-instruct-q4_K_M
+PARAMETER num_ctx 131072

@@ -1,0 +1,2 @@
+FROM deepseek-r1:32b-qwen-distill-q4_K_M
+PARAMETER num_ctx 19456
