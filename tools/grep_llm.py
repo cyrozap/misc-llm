@@ -20,6 +20,7 @@ import argparse
 import os
 import sys
 import json
+from typing import NamedTuple
 
 import openai
 
@@ -28,6 +29,10 @@ MODELS: list[str] = [
     "qwen2.5-coder:32b-instruct-q4_K_M-19k",
     # "granite3.1-dense:8b-instruct-q4_K_M-128k",
 ]
+
+
+class Error(NamedTuple):
+    message: str
 
 
 def is_text_file(filepath: str) -> bool:
@@ -58,9 +63,9 @@ def parse_args() -> argparse.Namespace:
 
     return parser.parse_args()
 
-def process_file(filepath: str, client: openai.OpenAI, system_message: str, args: argparse.Namespace):
+def process_file(filepath: str, client: openai.OpenAI, system_message: str, args: argparse.Namespace) -> str | Error | None:
     if not is_text_file(filepath):
-        return
+        return None
 
     contents: str = open(filepath, "r", encoding="utf-8").read().strip()
 
@@ -108,9 +113,11 @@ def process_file(filepath: str, client: openai.OpenAI, system_message: str, args
     try:
         json_response: dict = json.loads(collected_response.strip())
         if json_response.get("match", False):
-            print(filepath)
+            return filepath
     except json.JSONDecodeError:
-        print(f"Failed to decode JSON from LLM for file \"{filepath}\"", file=sys.stderr)
+        return Error(f"Failed to decode JSON from LLM for file \"{filepath}\"")
+
+    return None
 
 def main() -> int:
     args: argparse.Namespace = parse_args()
@@ -143,7 +150,11 @@ def main() -> int:
         if not filepath:
             break
 
-        process_file(filepath, client, system_message, args)
+        result: str | Error | None = process_file(filepath, client, system_message, args)
+        if isinstance(result, Error):
+            print(result.message, file=sys.stderr)
+        elif result:
+            print(result)
 
     return 0
 
