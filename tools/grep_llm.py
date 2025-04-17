@@ -20,6 +20,7 @@ import argparse
 import os
 import sys
 import json
+from concurrent import futures
 from typing import NamedTuple
 
 import openai
@@ -129,11 +130,6 @@ def main() -> int:
     if not base_url:
         raise ValueError("Missing OpenAI API base URL")
 
-    client: openai.OpenAI = openai.OpenAI(
-        api_key=api_key,
-        base_url=base_url,
-    )
-
     system_message_parts: list[str] = [
         f"Given the file name and file contents provided by the user, determine whether it matches the following criteria: {args.prompt}",
         "Your response should be a JSON object containing a single boolean key `match`.",
@@ -145,16 +141,26 @@ def main() -> int:
 
     system_message: str = "\n".join(system_message_parts)
 
-    while True:
-        filepath: str = sys.stdin.readline().strip()
-        if not filepath:
-            break
+    futures_list: list[futures.Future[str | Error | None]] = []
+    with futures.ThreadPoolExecutor(max_workers=4) as executor:
+        while True:
+            filepath: str = sys.stdin.readline().strip()
+            if not filepath:
+                break
 
-        result: str | Error | None = process_file(filepath, client, system_message, args)
-        if isinstance(result, Error):
-            print(result.message, file=sys.stderr)
-        elif result:
-            print(result)
+            client: openai.OpenAI = openai.OpenAI(
+                api_key=api_key,
+                base_url=base_url,
+            )
+
+            futures_list.append(executor.submit(process_file, filepath, client, system_message, args))
+
+        for future in futures.as_completed(futures_list):
+            result: str | Error | None = future.result()
+            if isinstance(result, Error):
+                print(result.message, file=sys.stderr)
+            elif result:
+                print(result)
 
     return 0
 
