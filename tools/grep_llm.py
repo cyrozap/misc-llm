@@ -64,12 +64,7 @@ def parse_args() -> argparse.Namespace:
 
     return parser.parse_args()
 
-def process_file(filepath: str, client: openai.OpenAI, system_message: str, args: argparse.Namespace) -> str | Error | None:
-    if not is_text_file(filepath):
-        return None
-
-    contents: str = open(filepath, "r", encoding="utf-8").read().strip()
-
+def process_file(filepath: str, contents: str, client: openai.OpenAI, system_message: str, args: argparse.Namespace) -> str | Error | None:
     user_message: str = f"Content for \"{filepath}\":\n\n```\n{contents}\n```\n"
 
     messages: list[dict[str, str]] = [
@@ -148,12 +143,17 @@ def main() -> int:
             if not filepath:
                 break
 
+            if not is_text_file(filepath):
+                continue
+
+            contents: str = open(filepath, "r", encoding="utf-8").read().strip()
+
             client: openai.OpenAI = openai.OpenAI(
                 api_key=api_key,
                 base_url=base_url,
             )
 
-            futures_list.append(executor.submit(process_file, filepath, client, system_message, args))
+            futures_list.append(executor.submit(process_file, filepath, contents, client, system_message, args))
 
         for future in futures.as_completed(futures_list):
             result: str | Error | None = future.result()
