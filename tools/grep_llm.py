@@ -58,6 +58,60 @@ def parse_args() -> argparse.Namespace:
 
     return parser.parse_args()
 
+def process_file(filepath: str, client: openai.OpenAI, system_message: str, args: argparse.Namespace):
+    if not is_text_file(filepath):
+        return
+
+    contents: str = open(filepath, "r", encoding="utf-8").read().strip()
+
+    user_message: str = f"Content for \"{filepath}\":\n\n```\n{contents}\n```\n"
+
+    messages: list[dict[str, str]] = [
+        {
+            "role": "user",
+            "content": user_message,
+        },
+        {
+            "role": "assistant",
+            "content": "Ok.",
+        },
+        {
+            "role": "system",
+            "content": system_message,
+        },
+    ]
+
+    response: openai.types.chat.ChatCompletion | openai.Stream[openai.types.chat.ChatCompletionChunk] = client.chat.completions.create(
+        model=args.model,
+        messages=messages,  # type: ignore[arg-type]
+        stream=True,
+    )
+
+    collected_response: str = ""
+    if isinstance(response, openai.types.chat.ChatCompletion):
+        completion_choices: list[openai.types.chat.chat_completion.Choice] = response.choices
+        if completion_choices:
+            completion_message: openai.types.chat.chat_completion_message.ChatCompletionMessage = completion_choices[0].message
+            completion_content: str | None = completion_message.content
+            if completion_content is not None:
+                collected_response = completion_content
+    else:
+        for chunk in response:
+            if not chunk:
+                break
+            chunk_choices: list[openai.types.chat.chat_completion_chunk.Choice] = chunk.choices
+            if chunk_choices:
+                chunk_content: str | None = chunk_choices[0].delta.content
+                if chunk_content is not None:
+                    collected_response += chunk_content
+
+    try:
+        json_response: dict = json.loads(collected_response.strip())
+        if json_response.get("match", False):
+            print(filepath)
+    except json.JSONDecodeError:
+        print(f"Failed to decode JSON from LLM for file \"{filepath}\"", file=sys.stderr)
+
 def main() -> int:
     args: argparse.Namespace = parse_args()
 
@@ -89,58 +143,7 @@ def main() -> int:
         if not filepath:
             break
 
-        if not is_text_file(filepath):
-            continue
-
-        contents: str = open(filepath, "r", encoding="utf-8").read().strip()
-
-        user_message: str = f"Content for \"{filepath}\":\n\n```\n{contents}\n```\n"
-
-        messages: list[dict[str, str]] = [
-            {
-                "role": "user",
-                "content": user_message,
-            },
-            {
-                "role": "assistant",
-                "content": "Ok.",
-            },
-            {
-                "role": "system",
-                "content": system_message,
-            },
-        ]
-
-        response: openai.types.chat.ChatCompletion | openai.Stream[openai.types.chat.ChatCompletionChunk] = client.chat.completions.create(
-            model=args.model,
-            messages=messages,  # type: ignore[arg-type]
-            stream=True,
-        )
-
-        collected_response: str = ""
-        if isinstance(response, openai.types.chat.ChatCompletion):
-            completion_choices: list[openai.types.chat.chat_completion.Choice] = response.choices
-            if completion_choices:
-                completion_message: openai.types.chat.chat_completion_message.ChatCompletionMessage = completion_choices[0].message
-                completion_content: str | None = completion_message.content
-                if completion_content is not None:
-                    collected_response = completion_content
-        else:
-            for chunk in response:
-                if not chunk:
-                    break
-                chunk_choices: list[openai.types.chat.chat_completion_chunk.Choice] = chunk.choices
-                if chunk_choices:
-                    chunk_content: str | None = chunk_choices[0].delta.content
-                    if chunk_content is not None:
-                        collected_response += chunk_content
-
-        try:
-            json_response: dict = json.loads(collected_response.strip())
-            if json_response.get("match", False):
-                print(filepath)
-        except json.JSONDecodeError:
-            print(f"Failed to decode JSON from LLM for file \"{filepath}\"", file=sys.stderr)
+        process_file(filepath, client, system_message, args)
 
     return 0
 
