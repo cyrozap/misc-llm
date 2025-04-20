@@ -20,7 +20,6 @@ import argparse
 import os
 import sys
 import json
-from concurrent import futures
 from typing import NamedTuple
 
 import openai
@@ -64,7 +63,12 @@ def parse_args() -> argparse.Namespace:
 
     return parser.parse_args()
 
-def process_file(filepath: str, contents: str, client: openai.OpenAI, system_message: str, args: argparse.Namespace) -> str | Error | None:
+def process_file(filepath: str, client: openai.OpenAI, system_message: str, args: argparse.Namespace) -> str | Error | None:
+    if not is_text_file(filepath):
+        return None
+
+    contents: str = open(filepath, "r", encoding="utf-8").read().strip()
+
     user_message: str = f"Content for \"{filepath}\":\n\n```\n{contents}\n```\n"
 
     messages: list[dict[str, str]] = [
@@ -125,6 +129,11 @@ def main() -> int:
     if not base_url:
         raise ValueError("Missing OpenAI API base URL")
 
+    client: openai.OpenAI = openai.OpenAI(
+        api_key=api_key,
+        base_url=base_url,
+    )
+
     system_message_parts: list[str] = [
         f"Given the file name and file contents provided by the user, determine whether it matches the following criteria: {args.prompt}",
         "Your response should be a JSON object containing a single boolean key `match`.",
@@ -136,31 +145,16 @@ def main() -> int:
 
     system_message: str = "\n".join(system_message_parts)
 
-    futures_list: list[futures.Future[str | Error | None]] = []
-    with futures.ThreadPoolExecutor(max_workers=4) as executor:
-        while True:
-            filepath: str = sys.stdin.readline().strip()
-            if not filepath:
-                break
+    while True:
+        filepath: str = sys.stdin.readline().strip()
+        if not filepath:
+            break
 
-            if not is_text_file(filepath):
-                continue
-
-            contents: str = open(filepath, "r", encoding="utf-8").read().strip()
-
-            client: openai.OpenAI = openai.OpenAI(
-                api_key=api_key,
-                base_url=base_url,
-            )
-
-            futures_list.append(executor.submit(process_file, filepath, contents, client, system_message, args))
-
-        for future in futures.as_completed(futures_list):
-            result: str | Error | None = future.result()
-            if isinstance(result, Error):
-                print(result.message, file=sys.stderr)
-            elif result:
-                print(result)
+        result: str | Error | None = process_file(filepath, client, system_message, args)
+        if isinstance(result, Error):
+            print(result.message, file=sys.stderr)
+        elif result:
+            print(result)
 
     return 0
 
