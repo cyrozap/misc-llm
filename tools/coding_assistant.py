@@ -31,6 +31,9 @@ from bs4.element import Tag  # type: ignore[import-untyped]
 
 MODELS: list[str] = [
     "qwen2.5-coder:32b-instruct-q4_K_M-19k",
+    "qwen3:14b-q4_K_M-98k",
+    "qwen3:30b-a3b-q4_K_M-46k",
+    "qwen3:32b-q4_K_M-13k",
     "deepseek-r1:32b-qwen-distill-q4_K_M-19k",
     "qwq:32b-q4_K_M-19k",
     "granite3.1-dense:8b-instruct-q4_K_M-128k",
