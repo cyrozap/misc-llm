@@ -25,8 +25,8 @@ import time
 from pathlib import Path
 
 import openai
-from bs4 import BeautifulSoup  # type: ignore[import-untyped]
-from bs4.element import Tag  # type: ignore[import-untyped]
+from bs4 import BeautifulSoup
+from bs4.element import PageElement, Tag
 
 
 MODELS: list[str] = [
@@ -79,8 +79,8 @@ def join_with_and(strs: list[str]) -> str:
 def replace_think_tag(html_data: bytes) -> bytes:
     soup: BeautifulSoup = BeautifulSoup(html_data.decode("utf-8"), "html.parser")
 
-    think: Tag | None = soup.find("think")
-    if think is None:
+    think: PageElement | None = soup.find("think")
+    if think is None or not isinstance(think, Tag):
         return html_data
 
     details: Tag = soup.new_tag("details")
