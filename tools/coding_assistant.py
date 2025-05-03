@@ -252,13 +252,14 @@ def main() -> None:
                 markdown_file.name,
             ], stdout=subprocess.PIPE)
 
-            replaced: bytes = replace_think_tag(output.stdout)
-            html_file.write(replaced)
-            html_file.flush()
+            if output.returncode == 0:
+                replaced: bytes = replace_think_tag(output.stdout)
+                html_file.write(replaced)
+                html_file.flush()
 
-            subprocess.run(["chromium", "--incognito", html_file.name])
+                subprocess.run(["chromium", "--incognito", html_file.name])
 
-            time.sleep(3)
+                time.sleep(3)
 
 
 if __name__ == "__main__":
