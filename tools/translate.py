@@ -26,6 +26,7 @@ import openai
 
 MODELS: list[str] = [
     "qwen2.5-coder:32b-instruct-q4_K_M-19k",
+    "granite3.3:8b-128k",
     "granite3.1-dense:8b-instruct-q4_K_M-128k",
 ]
 

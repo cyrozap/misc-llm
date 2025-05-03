@@ -36,6 +36,7 @@ MODELS: list[str] = [
     "qwen3:32b-q4_K_M-13k",
     "deepseek-r1:32b-qwen-distill-q4_K_M-19k",
     "qwq:32b-q4_K_M-19k",
+    "granite3.3:8b-128k",
     "granite3.1-dense:8b-instruct-q4_K_M-128k",
 
     # 48 GB VRAM only
