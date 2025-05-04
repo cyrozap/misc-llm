@@ -239,18 +239,32 @@ def main() -> None:
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".html") as html_file:
             script_directory: Path = Path(__file__).resolve().parent
             css_path: Path = script_directory / "resources" / "gh-pandoc.css"
+            copy_script_html_path: Path = script_directory / "resources" / "copy.html"
+            filter_path: Path = script_directory / "support" / "filter_wrapper.sh"
 
-            output: subprocess.CompletedProcess = subprocess.run([
+            pandoc_args: list[str] = [
                 "pandoc",
                 "--embed-resources",
                 "--standalone",
                 "--css", str(css_path),
+            ]
+
+            if (script_directory / "support" / ".env" / "bin" / "python3").is_file():
+                pandoc_args.extend([
+                    "--include-in-header", str(copy_script_html_path),
+                    "--filter", str(filter_path),
+                ])
+
+            pandoc_args.extend([
                 "--highlight-style", "kate",
                 "--metadata", "title=Coding Assistant",
                 "-f", "gfm",
                 "-t", "html",
                 markdown_file.name,
-            ], stdout=subprocess.PIPE)
+            ])
+
+            output: subprocess.CompletedProcess = subprocess.run(
+                pandoc_args, stdout=subprocess.PIPE)
 
             if output.returncode == 0:
                 replaced: bytes = replace_think_tag(output.stdout)

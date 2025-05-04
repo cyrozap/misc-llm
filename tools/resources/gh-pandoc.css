@@ -827,3 +827,21 @@ details[open] summary {
   border-bottom: 1px solid #aaa;
   margin-bottom: 0.5em;
 }
+
+div.code-container {
+  background-color: #f8f8f8;
+}
+
+div.code-controls {
+  margin: 1em 0;
+  border-top: 1px solid #ddd;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+}
+
+@media print {
+  div.code-controls > button {
+    display: none;
+  }
+}
