@@ -64,6 +64,23 @@ def find_model_by_prefix(prefix: str) -> str:
             return model
     raise ValueError(f"Model with prefix \"{prefix}\" not found. Available models are: {", ".join(MODELS)}")
 
+def format_duration(seconds: float | int) -> str:
+    seconds = int(seconds)
+    if seconds < 60:
+        return f"{seconds}s"
+    elif seconds < 3600:
+        minutes, remaining_seconds = divmod(seconds, 60)
+        return f"{minutes}m{remaining_seconds}s" if remaining_seconds > 0 else f"{minutes}m"
+    else:
+        hours, remaining = divmod(seconds, 3600)
+        minutes, seconds = divmod(remaining, 60)
+        parts: list[str] = [
+            f"{hours}h" if hours > 0 else "",
+            f"{minutes}m" if minutes > 0 or not hours else "",
+            f"{seconds}s" if seconds > 0 or not minutes and not hours else "",
+        ]
+        return "".join(parts)
+
 def join_with_and(strs: list[str]) -> str:
     if len(strs) == 0:
         return ""
@@ -76,7 +93,7 @@ def join_with_and(strs: list[str]) -> str:
         last_string: str = strs[-1]
         return f"{all_but_last}, and {last_string}"
 
-def replace_think_tag(html_data: bytes) -> bytes:
+def replace_think_tag(html_data: bytes, thinking_time: float | None) -> bytes:
     soup: BeautifulSoup = BeautifulSoup(html_data.decode("utf-8"), "html.parser")
 
     think: PageElement | None = soup.find("think")
@@ -87,6 +104,8 @@ def replace_think_tag(html_data: bytes) -> bytes:
 
     summary: Tag = soup.new_tag("summary")
     summary.string = "💡 Thought Process"
+    if thinking_time is not None:
+        summary.string += " (thought for {})".format(format_duration(thinking_time))
     details.append(summary)
 
     div: Tag = soup.new_tag("div")
@@ -186,6 +205,9 @@ def main() -> None:
 
     print(f"Model: {args.model}", file=sys.stderr)
 
+    think_start: float | None = None
+    think_end: float | None = None
+
     usage: openai.types.chat.chat_completion.CompletionUsage | None = None
     collected_response: str = ""
     for chunk in response:
@@ -196,11 +218,19 @@ def main() -> None:
         if choices:
             chunk_content: str | None = choices[0].delta.content
             if chunk_content is not None:
+                if "<think>" in chunk_content:
+                    think_start = time.time()
+                if "</think>" in chunk_content:
+                    think_end = time.time()
                 print(chunk_content, end="", flush=True)
                 collected_response += chunk_content
     print()
 
     end_time: float = time.time()
+
+    thinking_time: float | None = None
+    if think_start is not None and think_end is not None:
+        thinking_time = think_end - think_start
 
     if usage:
         total_time: float = end_time - start_time
@@ -267,7 +297,7 @@ def main() -> None:
                 pandoc_args, stdout=subprocess.PIPE)
 
             if output.returncode == 0:
-                replaced: bytes = replace_think_tag(output.stdout)
+                replaced: bytes = replace_think_tag(output.stdout, thinking_time)
                 html_file.write(replaced)
                 html_file.flush()
 
