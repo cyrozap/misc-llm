@@ -39,8 +39,7 @@ header,
 hgroup,
 main,
 nav,
-section,
-summary {
+section {
   display: block;
 }
 
@@ -817,6 +816,7 @@ summary {
   font-weight: bold;
   margin: -0.5em -0.5em 0;
   padding: 0.5em;
+  cursor: pointer;
 }
 
 details[open] {
