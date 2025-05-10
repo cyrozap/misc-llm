@@ -221,9 +221,9 @@ def main() -> None:
             if chunk_content is not None:
                 if response_start is None:
                     response_start = time.time()
-                if "<think>" in chunk_content:
+                if "<think>" in chunk_content and think_start is None:
                     think_start = time.time()
-                if "</think>" in chunk_content:
+                if "</think>" in chunk_content and think_end is None:
                     think_end = time.time()
                 print(chunk_content, end="", flush=True)
                 collected_response += chunk_content
