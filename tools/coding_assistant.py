@@ -205,6 +205,7 @@ def main() -> None:
 
     print(f"Model: {args.model}", file=sys.stderr)
 
+    response_start: float | None = None
     think_start: float | None = None
     think_end: float | None = None
 
@@ -218,6 +219,8 @@ def main() -> None:
         if choices:
             chunk_content: str | None = choices[0].delta.content
             if chunk_content is not None:
+                if response_start is None:
+                    response_start = time.time()
                 if "<think>" in chunk_content:
                     think_start = time.time()
                 if "</think>" in chunk_content:
@@ -228,11 +231,16 @@ def main() -> None:
 
     end_time: float = time.time()
 
+    if response_start is None:
+        response_start = end_time
+
     thinking_time: float | None = None
     if think_start is not None and think_end is not None:
         thinking_time = think_end - think_start
 
     if usage:
+        pp_time: float = response_start - start_time
+        gen_time: float = end_time - response_start
         total_time: float = end_time - start_time
 
         token_usage_message: str = "\n".join([
@@ -241,7 +249,8 @@ def main() -> None:
             "Prompt tokens: {}".format(usage.prompt_tokens),  # type: ignore[union-attr]
             "Completion tokens: {}".format(usage.completion_tokens),  # type: ignore[union-attr]
             "Time taken: {:.6f} seconds".format(total_time),
-            "Tokens per second: {:.2f} tokens/s".format(usage.completion_tokens / total_time),  # type: ignore[union-attr]
+            "Prompt processing speed: {:.2f} tokens/s".format(usage.prompt_tokens / pp_time),  # type: ignore[union-attr]
+            "Generation speed: {:.2f} tokens/s".format(usage.completion_tokens / gen_time),  # type: ignore[union-attr]
         ])
 
         print(token_usage_message, file=sys.stderr)
