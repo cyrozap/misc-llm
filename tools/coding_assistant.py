@@ -30,12 +30,12 @@ from bs4.element import PageElement, Tag
 
 
 MODELS: list[str] = [
-    "qwen2.5-coder:32b-instruct-q4_K_M-19k",
-    "qwen3:14b-q4_K_M-98k",
+    "qwen2.5-coder:32b-instruct-q4_K_M-17k",
+    "qwen3:14b-q4_K_M-95k",
     "qwen3:30b-a3b-q4_K_M-46k",
-    "qwen3:32b-q4_K_M-13k",
-    "deepseek-r1:32b-qwen-distill-q4_K_M-19k",
-    "qwq:32b-q4_K_M-19k",
+    "qwen3:32b-q4_K_M-12k",
+    "deepseek-r1:32b-qwen-distill-q4_K_M-17k",
+    "qwq:32b-q4_K_M-17k",
     "granite3.3:8b-128k",
     "granite3.1-dense:8b-instruct-q4_K_M-128k",
 
