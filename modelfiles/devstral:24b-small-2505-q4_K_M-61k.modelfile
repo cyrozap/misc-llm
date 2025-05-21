@@ -1,0 +1,2 @@
+FROM devstral:24b-small-2505-q4_K_M
+PARAMETER num_ctx 62464
