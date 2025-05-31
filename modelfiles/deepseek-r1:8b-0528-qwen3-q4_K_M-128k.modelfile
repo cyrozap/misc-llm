@@ -1,0 +1,2 @@
+FROM deepseek-r1:8b-0528-qwen3-q4_K_M
+PARAMETER num_ctx 131072
