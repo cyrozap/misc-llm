@@ -31,7 +31,6 @@ from bs4.element import PageElement, Tag
 
 MODELS: list[str] = [
     "qwen2.5-coder:32b-instruct-q4_K_M-17k",
-    "devstral:24b-small-2505-q4_K_M-61k",
     "qwen3:14b-q4_K_M-95k",
     "qwen3:30b-a3b-q4_K_M-46k",
     "qwen3:32b-q4_K_M-12k",
