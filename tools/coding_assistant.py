@@ -94,7 +94,7 @@ def join_with_and(strs: list[str]) -> str:
         last_string: str = strs[-1]
         return f"{all_but_last}, and {last_string}"
 
-def replace_think_tag(html_data: bytes, thinking_time: float | None) -> bytes:
+def replace_think_tag(html_data: bytes, thinking_html: bytes, thinking_time: float | None) -> bytes:
     soup: BeautifulSoup = BeautifulSoup(html_data.decode("utf-8"), "html.parser")
 
     think: PageElement | None = soup.find("think")
@@ -110,7 +110,7 @@ def replace_think_tag(html_data: bytes, thinking_time: float | None) -> bytes:
     details.append(summary)
 
     div: Tag = soup.new_tag("div")
-    div.append(BeautifulSoup(think.decode_contents(), "html.parser"))
+    div.append(BeautifulSoup(thinking_html.decode("utf-8"), "html.parser"))
     details.append(div)
 
     think.replace_with(details)
@@ -210,6 +210,9 @@ def main() -> None:
     think_start: float | None = None
     think_end: float | None = None
 
+    think_start_idx: int | None = None
+    think_end_idx: int | None = None
+
     usage: openai.types.chat.chat_completion.CompletionUsage | None = None
     collected_response: str = ""
     for chunk in response:
@@ -222,10 +225,15 @@ def main() -> None:
             if chunk_content is not None:
                 if response_start is None:
                     response_start = time.time()
+
                 if "<think>" in chunk_content and think_start is None:
                     think_start = time.time()
+                    think_start_idx = len(collected_response) + chunk_content.index("<think>")
+
                 if "</think>" in chunk_content and think_end is None:
                     think_end = time.time()
+                    think_end_idx = len(collected_response) + chunk_content.index("</think>")
+
                 print(chunk_content, end="", flush=True)
                 collected_response += chunk_content
     print()
@@ -271,6 +279,27 @@ def main() -> None:
             markdown_paragraphs.append("\n".join(["- `{}`".format(filename) for filename in args.filenames]))
 
         markdown_paragraphs.append("## Response")
+
+        # Extract and format thinking from response, if any
+        thinking_html: bytes | None = None
+        if think_start_idx is not None and think_end_idx is not None:
+            before_think: str = collected_response[:think_start_idx]
+            thinking: str = collected_response[think_start_idx + len("<think>"):think_end_idx]
+            after_think: str = collected_response[think_end_idx + len("</think>"):]
+
+            complete: subprocess.CompletedProcess = subprocess.run([
+                "pandoc",
+                "--highlight-style", "kate",
+                "-f", "gfm",
+                "-t", "html",
+            ], input=thinking.encode("utf-8"), stdout=subprocess.PIPE)
+
+            if complete.returncode != 0:
+                raise Exception("Failed to format thinking!")
+
+            thinking_html = complete.stdout
+            collected_response = f"{before_think}<think></think>\n\n{after_think}"
+
         markdown_paragraphs.append(collected_response)
 
         markdown_file.write("\n\n".join(markdown_paragraphs))
@@ -307,8 +336,10 @@ def main() -> None:
                 pandoc_args, stdout=subprocess.PIPE)
 
             if output.returncode == 0:
-                replaced: bytes = replace_think_tag(output.stdout, thinking_time)
-                html_file.write(replaced)
+                html_data: bytes = output.stdout
+                if thinking_html is not None:
+                    html_data = replace_think_tag(html_data, thinking_html, thinking_time)
+                html_file.write(html_data)
                 html_file.flush()
 
                 subprocess.run(["chromium", "--incognito", html_file.name])
