@@ -90,6 +90,10 @@ def main() -> int:
         stream_options={"include_usage": True},  # type: ignore[call-overload]
     )
 
+    response_start: float | None = None
+    think_start: float | None = None
+    think_end: float | None = None
+
     usage: openai.types.chat.chat_completion.CompletionUsage | None = None
     for chunk in response:
         if not chunk:
@@ -99,12 +103,30 @@ def main() -> int:
         if choices:
             chunk_content: str | None = choices[0].delta.content
             if chunk_content is not None:
+                if response_start is None:
+                    response_start = time.time()
+
+                if "<think>" in chunk_content and think_start is None:
+                    think_start = time.time()
+
+                if "</think>" in chunk_content and think_end is None:
+                    think_end = time.time()
+
                 print(chunk_content, end="", flush=True)
     print()
 
     end_time: float = time.time()
 
+    if response_start is None:
+        response_start = end_time
+
+    thinking_time: float = 0
+    if think_start is not None and think_end is not None:
+        thinking_time = think_end - think_start
+
     if usage:
+        pp_time: float = response_start - start_time
+        gen_time: float = end_time - response_start
         total_time: float = end_time - start_time
 
         token_usage_message: str = "\n".join([
@@ -112,8 +134,10 @@ def main() -> int:
             "Tokens used: {}".format(usage.total_tokens),  # type: ignore[union-attr]
             "Prompt tokens: {}".format(usage.prompt_tokens),  # type: ignore[union-attr]
             "Completion tokens: {}".format(usage.completion_tokens),  # type: ignore[union-attr]
-            "Time taken: {:.6f} seconds".format(total_time),
-            "Tokens per second: {:.2f} tokens/s".format(usage.completion_tokens / total_time),  # type: ignore[union-attr]
+            "Total time taken: {:.6f} seconds".format(total_time),
+            "Time spent thinking: {:.6f} seconds".format(thinking_time),
+            "Prompt processing speed: {:.2f} tokens/s".format(usage.prompt_tokens / pp_time),  # type: ignore[union-attr]
+            "Generation speed: {:.2f} tokens/s".format(usage.completion_tokens / gen_time),  # type: ignore[union-attr]
         ])
 
         print(token_usage_message, file=sys.stderr)
