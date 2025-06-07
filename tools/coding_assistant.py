@@ -94,7 +94,7 @@ def join_with_and(strs: list[str]) -> str:
         last_string: str = strs[-1]
         return f"{all_but_last}, and {last_string}"
 
-def replace_think_tag(html_data: bytes, thinking_html: bytes, thinking_time: float | None) -> bytes:
+def replace_think_tag(html_data: bytes, thinking_html: bytes, thinking_time: float) -> bytes:
     soup: BeautifulSoup = BeautifulSoup(html_data.decode("utf-8"), "html.parser")
 
     think: PageElement | None = soup.find("think")
@@ -104,9 +104,7 @@ def replace_think_tag(html_data: bytes, thinking_html: bytes, thinking_time: flo
     details: Tag = soup.new_tag("details")
 
     summary: Tag = soup.new_tag("summary")
-    summary.string = "💡 Thought Process"
-    if thinking_time is not None:
-        summary.string += " (thought for {})".format(format_duration(thinking_time))
+    summary.string = "💡 Thought Process (thought for {})".format(format_duration(thinking_time))
     details.append(summary)
 
     div: Tag = soup.new_tag("div")
@@ -243,7 +241,7 @@ def main() -> None:
     if response_start is None:
         response_start = end_time
 
-    thinking_time: float | None = None
+    thinking_time: float = 0
     if think_start is not None and think_end is not None:
         thinking_time = think_end - think_start
 
@@ -257,7 +255,8 @@ def main() -> None:
             "Tokens used: {}".format(usage.total_tokens),  # type: ignore[union-attr]
             "Prompt tokens: {}".format(usage.prompt_tokens),  # type: ignore[union-attr]
             "Completion tokens: {}".format(usage.completion_tokens),  # type: ignore[union-attr]
-            "Time taken: {:.6f} seconds".format(total_time),
+            "Total time taken: {:.6f} seconds".format(total_time),
+            "Time spent thinking: {:.6f} seconds".format(thinking_time),
             "Prompt processing speed: {:.2f} tokens/s".format(usage.prompt_tokens / pp_time),  # type: ignore[union-attr]
             "Generation speed: {:.2f} tokens/s".format(usage.completion_tokens / gen_time),  # type: ignore[union-attr]
         ])
