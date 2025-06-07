@@ -25,6 +25,8 @@ import openai
 
 
 MODELS: list[str] = [
+    "qwen3:30b-a3b-q4_K_M-46k",
+    "qwen3:14b-q4_K_M-95k",
     "qwen2.5-coder:32b-instruct-q4_K_M-17k",
     "granite3.3:8b-128k",
     "granite3.1-dense:8b-instruct-q4_K_M-128k",
@@ -69,6 +71,9 @@ def main() -> int:
     input_data: str = sys.stdin.read().strip()
 
     system_message: str = f"Translate the provided text to {args.language}. YOU MUST ONLY OUTPUT THE TRANSLATED TEXT!"
+
+    if args.model.startswith("qwen3:"):
+        system_message += " /no_think"
 
     messages: list[dict[str, str]] = [
         {
