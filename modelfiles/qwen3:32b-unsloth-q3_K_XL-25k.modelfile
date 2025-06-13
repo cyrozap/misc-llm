@@ -1,0 +1,2 @@
+FROM hf.co/unsloth/Qwen3-32B-GGUF:Q3_K_XL
+PARAMETER num_ctx 25600
