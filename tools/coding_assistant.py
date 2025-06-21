@@ -127,6 +127,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("-m", "--model", type=find_model_by_prefix, default=MODELS[0],
                         help="Model to use. You can provide a prefix match for any of the following models (default: {}):\n\n{} ".format(
                             MODELS[0], "\n".join(["- {}".format(model) for model in MODELS])))
+    parser.add_argument("-g", "--generalist", action="store_true",
+                        help="Exclude instructions from the system message on how to format code and terminal commands.")
     parser.add_argument("user_prompt", help="The user's question or prompt", type=str)
     parser.add_argument("filenames", nargs="*", help="list of filenames to provide as context", type=str)
 
@@ -151,11 +153,23 @@ def main() -> None:
         "You are Koda, an AI coding assistant.",
         f"You are an expert in {join_with_and(LANGUAGE_EXPERTISE)}.",
         f"You are also an expert at {join_with_and(SKILLS)}.",
-        "Do NOT prefix your responses with any words like \"Certainly!\", \"Sure!\", or similar phrases.",
-        "If your answer contains fenced code blocks in Markdown, include the relevant full file path in the code block tag using this structure: ```$LANGUAGE:$FILEPATH```",
-        "For example, for a Python file \"program.py\", the structure should be: ```python:program.py```",
-        "For executable terminal commands, enclose each command in an individual ```bash``` language fenced code block without any comments or newlines inside.",
     ]
+
+    if args.generalist:
+        system_message_parts = [
+            "You are Koda, an AI assistant.",
+        ]
+
+    system_message_parts.extend([
+        "Do NOT prefix your responses with any words like \"Certainly!\", \"Sure!\", or similar phrases.",
+    ])
+
+    if not args.generalist:
+        system_message_parts.extend([
+            "If your answer contains fenced code blocks in Markdown, include the relevant full file path in the code block tag using this structure: ```$LANGUAGE:$FILEPATH```",
+            "For example, for a Python file \"program.py\", the structure should be: ```python:program.py```",
+            "For executable terminal commands, enclose each command in an individual ```bash``` language fenced code block without any comments or newlines inside.",
+        ])
 
     system_message: str = "\n".join(system_message_parts)
 
