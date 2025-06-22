@@ -20,6 +20,7 @@ import argparse
 import os
 import sys
 import time
+from enum import Enum
 
 import openai
 
@@ -31,6 +32,13 @@ MODELS: list[str] = [
     "granite3.3:8b-128k",
     "granite3.1-dense:8b-instruct-q4_K_M-128k",
 ]
+
+
+class ThinkingState(Enum):
+    PRE_THINKING = 0
+    THINKING = 1
+    END_THINKING = 2
+    DONE_THINKING = 3
 
 
 def find_model_by_prefix(prefix: str) -> str:
@@ -99,10 +107,14 @@ def main() -> int:
     think_start: float | None = None
     think_end: float | None = None
 
+    thinking_state: ThinkingState = ThinkingState.PRE_THINKING
+
     usage: openai.types.chat.chat_completion.CompletionUsage | None = None
     for chunk in response:
         if not chunk:
             break
+        if thinking_state == ThinkingState.END_THINKING:
+            thinking_state = ThinkingState.DONE_THINKING
         usage = chunk.usage
         choices: list[openai.types.chat.chat_completion_chunk.Choice] = chunk.choices
         if choices:
@@ -113,11 +125,16 @@ def main() -> int:
 
                 if "<think>" in chunk_content and think_start is None:
                     think_start = time.time()
+                    if thinking_state == ThinkingState.PRE_THINKING:
+                        thinking_state = ThinkingState.THINKING
 
                 if "</think>" in chunk_content and think_end is None:
                     think_end = time.time()
+                    if thinking_state == ThinkingState.THINKING:
+                        thinking_state = ThinkingState.END_THINKING
 
-                print(chunk_content, end="", flush=True)
+                if thinking_state in (ThinkingState.PRE_THINKING, ThinkingState.DONE_THINKING):
+                    print(chunk_content, end="", flush=True)
     print()
 
     end_time: float = time.time()
