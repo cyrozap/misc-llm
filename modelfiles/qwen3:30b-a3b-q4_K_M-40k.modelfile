@@ -1,2 +1,2 @@
 FROM qwen3:30b-a3b-q4_K_M
-PARAMETER num_ctx 47104
+PARAMETER num_ctx 40960
