@@ -41,6 +41,8 @@ MODELS: list[str] = [
     "deepseek-r1:8b-0528-qwen3-q4_K_M-128k",
     "deepseek-r1:32b-qwen-distill-q4_K_M-17k",
 
+    "gpt-oss:20b-32k",
+
     "qwq:32b-q4_K_M-17k",
 
     "granite3.3:8b-128k",
