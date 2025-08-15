@@ -80,7 +80,7 @@ def main() -> int:
 
     system_message: str = f"Translate the provided text to {args.language}. YOU MUST ONLY OUTPUT THE TRANSLATED TEXT!"
 
-    if args.model.startswith("qwen3:"):
+    if args.model.startswith("qwen3:") and not args.model.startswith("qwen3:30b-a3b-instruct-2507"):
         system_message += " /no_think"
 
     messages: list[dict[str, str]] = [
