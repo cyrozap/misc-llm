@@ -235,16 +235,34 @@ def main() -> None:
 
     usage: openai.types.chat.chat_completion.CompletionUsage | None = None
     collected_response: str = ""
+    collected_reasoning: str = ""
     for chunk in response:
         if not chunk:
             break
         usage = chunk.usage
         choices: list[openai.types.chat.chat_completion_chunk.Choice] = chunk.choices
         if choices:
-            chunk_content: str | None = choices[0].delta.content
-            if chunk_content is not None:
+            delta: openai.types.chat.chat_completion_chunk.ChoiceDelta = choices[0].delta
+
+            reasoning_content: str | None = getattr(delta, "reasoning", None)
+            chunk_content: str | None = delta.content
+
+            if reasoning_content or chunk_content:
                 if response_start is None:
                     response_start = time.time()
+
+            if reasoning_content:
+                if think_start is None:
+                    think_start = time.time()
+                    print("<think>", flush=True)
+
+                print(reasoning_content, end="", flush=True)
+                collected_reasoning += reasoning_content
+
+            elif chunk_content is not None:
+                if collected_reasoning and think_end is None:
+                    think_end = time.time()
+                    print("\n<think>\n", flush=True)
 
                 if "<think>" in chunk_content and think_start is None:
                     think_start = time.time()
@@ -303,11 +321,17 @@ def main() -> None:
 
         # Extract and format thinking from response, if any
         thinking_html: bytes | None = None
+        thinking: str | None = None
         if think_start_idx is not None and think_end_idx is not None:
             before_think: str = collected_response[:think_start_idx]
-            thinking: str = collected_response[think_start_idx + len("<think>"):think_end_idx]
+            thinking = collected_response[think_start_idx + len("<think>"):think_end_idx]
             after_think: str = collected_response[think_end_idx + len("</think>"):]
+            collected_response = f"{before_think}<think></think>\n\n{after_think}"
+        elif collected_reasoning:
+            thinking = collected_reasoning
+            collected_response = f"<think></think>\n\n{collected_response}"
 
+        if thinking is not None:
             complete: subprocess.CompletedProcess = subprocess.run([
                 "pandoc",
                 "--highlight-style", "kate",
@@ -319,7 +343,6 @@ def main() -> None:
                 raise Exception("Failed to format thinking!")
 
             thinking_html = complete.stdout
-            collected_response = f"{before_think}<think></think>\n\n{after_think}"
 
         markdown_paragraphs.append(collected_response)
 
