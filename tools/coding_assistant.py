@@ -30,27 +30,11 @@ from bs4.element import PageElement, Tag
 
 
 MODELS: list[str] = [
-    "qwen3:32b-unsloth-q3_K_XL-25k",
+    "qwen3:32b-q4_K_M-39k",
+    "qwen3:30b-a3b-thinking-2507-q4_K_M-117k",
 
-    "qwen2.5-coder:32b-instruct-q4_K_M-17k",
-
-    "qwen3:14b-q4_K_M-40k",
-    "qwen3:30b-a3b-thinking-2507-q4_K_M-47k",
-    "qwen3:32b-q4_K_M-12k",
-
-    "deepseek-r1:8b-0528-qwen3-q4_K_M-128k",
-    "deepseek-r1:32b-qwen-distill-q4_K_M-17k",
-
-    "gpt-oss:20b-32k",
-
-    "qwq:32b-q4_K_M-17k",
-
-    "granite3.3:8b-128k",
-    "granite3.1-dense:8b-instruct-q4_K_M-128k",
-
-    # 48 GB VRAM only
-    "qwen2.5-coder:32b-instruct-q4_K_M-110k",
-    "deepseek-r1:32b-qwen-distill-q4_K_M-110k",
+    "gpt-oss:120b-46k",
+    "gpt-oss:20b-128k",
 ]
 
 LANGUAGE_EXPERTISE: list[str] = [
