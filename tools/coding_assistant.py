@@ -206,6 +206,7 @@ def main() -> None:
         messages=messages,  # type: ignore[arg-type]
         stream=True,
         stream_options={"include_usage": True},  # type: ignore[call-overload]
+        **({"extra_body": {"reasoning_effort": "high"}} if args.model.startswith("gpt-oss:") else {})
     )
 
     print(f"Model: {args.model}", file=sys.stderr)
