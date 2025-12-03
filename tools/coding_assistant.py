@@ -18,6 +18,7 @@
 
 import argparse
 import os
+import platform
 import subprocess
 import sys
 import tempfile
@@ -371,7 +372,10 @@ def main() -> None:
                 html_file.write(html_data)
                 html_file.flush()
 
-                subprocess.run(["chromium", "--incognito", html_file.name])
+                if platform.system() == "Darwin":
+                    subprocess.run(["open", html_file.name])
+                else:
+                    subprocess.run(["chromium", "--incognito", html_file.name])
 
                 time.sleep(3)
 
