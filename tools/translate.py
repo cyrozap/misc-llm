@@ -26,7 +26,7 @@ import openai
 
 
 MODELS: list[str] = [
-    "qwen3:30b-a3b-instruct-2507-q4_K_M-117k",
+    "qwen3:30b-a3b-instruct-2507-q4_K_M-222k",
 ]
 
 

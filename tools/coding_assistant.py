@@ -32,7 +32,7 @@ from bs4.element import PageElement, Tag
 
 MODELS: list[str] = [
     "qwen3:32b-q4_K_M-39k",
-    "qwen3:30b-a3b-thinking-2507-q4_K_M-117k",
+    "qwen3:30b-a3b-thinking-2507-q4_K_M-222k",
 
     "qwen3-coder:30b-a3b-q4_K_M-222k",
 
