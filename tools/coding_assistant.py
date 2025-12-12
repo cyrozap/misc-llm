@@ -36,6 +36,8 @@ MODELS: list[str] = [
 
     "qwen3-coder:30b-a3b-q4_K_M-200k",
 
+    "trinity-mini:26b-a3b-instruct-2512-q4_K_M-128k",
+
     "gpt-oss:120b-46k",
     "gpt-oss:20b-128k",
 ]
