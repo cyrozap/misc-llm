@@ -31,13 +31,13 @@ from bs4.element import PageElement, Tag
 
 
 MODELS: list[str] = [
+    "qwen3.6:27b-q4_K_M-160k",
+    "qwen3.6:35b-a3b-q4_K_M-200k",
+
     "qwen3:32b-q4_K_M-39k",
     "qwen3:30b-a3b-thinking-2507-q4_K_M-200k",
 
     "qwen3-coder:30b-a3b-q4_K_M-200k",
-
-    "qwen3.6:27b-q4_K_M-160k",
-    "qwen3.6:35b-a3b-q4_K_M-200k",
 
     "trinity-mini:26b-a3b-instruct-2512-q4_K_M-128k",
 
