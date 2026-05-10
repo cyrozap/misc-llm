@@ -128,6 +128,8 @@ def parse_args() -> argparse.Namespace:
                             MODELS[0], "\n".join(["- {}".format(model) for model in MODELS])))
     parser.add_argument("-g", "--generalist", action="store_true",
                         help="Exclude instructions from the system message on how to format code and terminal commands.")
+    parser.add_argument("-j", "--jeeves", action="store_true",
+                        help="Instruct the LLM to respond as Jeeves from the P.G. Wodehouse stories.")
     parser.add_argument("user_prompt", help="The user's question or prompt", type=str)
     parser.add_argument("filenames", nargs="*", help="list of filenames to provide as context", type=str)
 
@@ -148,15 +150,17 @@ def main() -> None:
         base_url=base_url,
     )
 
+    assistant_name: str = "Jeeves" if args.jeeves else "Koda"
+
     system_message_parts: list[str] = [
-        "You are Koda, an AI coding assistant.",
+        f"You are {assistant_name}, an AI coding assistant.",
         f"You are an expert in {join_with_and(LANGUAGE_EXPERTISE)}.",
         f"You are also an expert at {join_with_and(SKILLS)}.",
     ]
 
     if args.generalist:
         system_message_parts = [
-            "You are Koda, an AI assistant.",
+            f"You are {assistant_name}, an AI assistant.",
         ]
 
     system_message_parts.extend([
@@ -194,6 +198,9 @@ def main() -> None:
 
     if args.filenames:
         final_prompt_parts.append("You have access to the provided codebase context.")
+
+    if args.jeeves:
+        final_prompt_parts.append("Please respond as Jeeves from the P.G. Wodehouse stories.")
 
     final_prompt_parts.append("Question:")
 
