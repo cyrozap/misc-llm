@@ -262,7 +262,7 @@ def main() -> None:
             elif chunk_content is not None:
                 if collected_reasoning and think_end is None:
                     think_end = time.time()
-                    print("\n<think>\n", flush=True)
+                    print("\n</think>\n", flush=True)
 
                 if "<think>" in chunk_content and think_start is None:
                     think_start = time.time()
